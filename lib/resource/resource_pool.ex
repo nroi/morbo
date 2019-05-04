@@ -38,10 +38,10 @@ defmodule Resource.ResourcePool do
           Logger.debug("No released resource exists for this seed: Creating a new one.")
           new_spawn = state.seed_to_spawn.(seed)
           state.transfer_ownership_to.(from_pid, new_spawn)
-          new_spawn
+          {:new_spawn, new_spawn}
 
         s ->
-          s
+          {:existing_spawn, s}
       end
 
     ref = Process.monitor(from_pid)
