@@ -28,14 +28,14 @@ defmodule Resource.ResourcePool do
 
     maybe_spawn =
       Enum.find(state.resources, fn
-        %Resource{state: :inactive, spawn: spawn} -> spawn
+        %Resource{state: :released, spawn: spawn} -> spawn
         %Resource{} -> nil
       end)
 
     spawn =
       case maybe_spawn do
         nil ->
-          Logger.debug("No inactive spawn exists for this seed: Creating a new one.")
+          Logger.debug("No released resource exists for this seed: Creating a new one.")
           new_spawn = state.seed_to_spawn.(seed)
           state.transfer_ownership_to.(from_pid, new_spawn)
           new_spawn
@@ -47,7 +47,7 @@ defmodule Resource.ResourcePool do
     ref = Process.monitor(from_pid)
 
     new_resource = %Resource{
-      state: :active,
+      state: :locked,
       seed: seed,
       spawn: spawn,
       owner: ref
@@ -62,23 +62,23 @@ defmodule Resource.ResourcePool do
   def handle_info({:DOWN, ref, :process, _pid, status}, state) do
     Logger.warn("Process went down with status #{inspect(status)}")
 
-    {resources_unchanged, resources_to_inactivate} =
+    {resources_unchanged, resources_to_release} =
       Enum.split_with(state.resources, fn
         %Resource{owner: ^ref} -> false
         %Resource{} -> true
       end)
 
-    Enum.each(resources_to_inactivate, fn %Resource{owner: ref, spawn: spawn} ->
+    Enum.each(resources_to_release, fn %Resource{owner: ref, spawn: spawn} ->
       state.transfer_ownership_to.(self(), spawn)
       true = Process.demonitor(ref)
     end)
 
-    inactivated_resources =
-      Enum.map(resources_to_inactivate, fn r = %Resource{state: :active} ->
-        %{r | state: :inactive}
+    released_resources =
+      Enum.map(resources_to_release, fn r = %Resource{state: :locked} ->
+        %{r | state: :released}
       end)
 
-    new_resources = resources_unchanged ++ inactivated_resources
+    new_resources = resources_unchanged ++ released_resources
     new_state = %{state | resources: new_resources}
     {:noreply, new_state}
   end
