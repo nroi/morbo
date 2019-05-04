@@ -3,9 +3,7 @@ defmodule ResourceTest do
   doctest Resource
 
   setup do
-
     initial_state = []
-
 
     resource_pool = start_supervised!({Resource.ResourcePool, %Resource.ResourcePool{}})
     %{resource_pool: resource_pool}

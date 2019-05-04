@@ -1,4 +1,5 @@
 defmodule Resource do
   defstruct state: :active,
-            seed: nil
+            seed: nil,
+            spawn: nil
 end
