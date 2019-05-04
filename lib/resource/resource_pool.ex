@@ -2,14 +2,14 @@ defmodule Resource.ResourcePool do
   use GenServer
   require Logger
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, :ok, opts)
   end
 
   @impl true
-  def init(args) do
+  def init(:ok) do
     # default implementation to avoid warning.
-    {:ok, args}
+    {:ok, %{}}
   end
 
 end
