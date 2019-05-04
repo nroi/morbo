@@ -5,7 +5,13 @@ defmodule ResourceTest do
   setup do
     initial_state = []
 
-    resource_pool = start_supervised!({Resource.ResourcePool, %Resource.ResourcePool{}})
+    init_state = %Resource.ResourcePool{
+      seed_to_spawn: fn seed -> {:spawned, seed} end,
+      transfer_ownership: fn _new_pid, spawn -> :ok end,
+      resources: []
+    }
+
+    resource_pool = start_supervised!({Resource.ResourcePool, init_state})
     %{resource_pool: resource_pool}
   end
 
