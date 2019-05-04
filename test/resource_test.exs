@@ -16,6 +16,7 @@ defmodule ResourceTest do
   end
 
   test "test resource pool", %{resource_pool: resource_pool} do
+    result = Resource.ResourcePool.resource_request(:seed)
     assert true
   end
 end

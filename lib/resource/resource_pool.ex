@@ -8,14 +8,18 @@ defmodule Resource.ResourcePool do
             resources: []
 
   def start_link(initial_state = %Resource.ResourcePool{}) do
-    GenServer.start_link(__MODULE__, initial_state, [])
+    GenServer.start_link(__MODULE__, initial_state, name: __MODULE__)
+  end
+
+  def resource_request(seed) do
+    GenServer.call(__MODULE__, {:resource_request, seed})
   end
 
   @impl true
   def init(initial_state) do
     Logger.debug("Starting gen_server with #{inspect(initial_state)}")
     # default implementation to avoid warning.
-    {:ok, %{}}
+    {:ok, initial_state}
   end
 
   @impl true
