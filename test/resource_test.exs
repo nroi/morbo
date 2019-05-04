@@ -7,7 +7,7 @@ defmodule ResourceTest do
 
     init_state = %Resource.ResourcePool{
       seed_to_spawn: fn seed -> {:spawned, seed} end,
-      transfer_ownership: fn _new_pid, spawn -> :ok end,
+      transfer_ownership_to: fn _new_pid, spawn -> :ok end,
       resources: []
     }
 
