@@ -15,13 +15,19 @@ defmodule ResourceTest do
 
   test "spawn fetched from existing spawn", %{resource_pool: resource_pool} do
     {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
-    :ok = Resource.ResourcePool.release_resource(:seed)
+    :ok = Resource.ResourcePool.release_resource(:seed1)
     {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
   end
 
   test "new spawn created when previous spawn still locked", %{resource_pool: resource_pool} do
     {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
     {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+  end
+
+  test "new spawn created after a previous spawn released", %{resource_pool: resource_pool} do
+    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    :ok = Resource.ResourcePool.release_resource(:seed1)
+    {:new_spawn, {:spawned, :seed2}} = Resource.ResourcePool.resource_request(:seed2)
   end
 
   test "resource released when release holder has crashed" do
