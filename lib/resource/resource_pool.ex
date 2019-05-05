@@ -19,10 +19,10 @@ defmodule Resource.ResourcePool do
     GenServer.call(__MODULE__, {:release_resource, seed})
   end
 
-  defp release_resource_from_state(ref, state = %ResourcePool{}) do
+  defp release_resource_from_state(pid, state = %ResourcePool{}) do
     {resources_unchanged, resources_to_release} =
       Enum.split_with(state.resources, fn
-        %Resource{owner: {^ref, _pid}} -> false
+        %Resource{owner: {ref, ^pid}} -> false
         %Resource{} -> true
       end)
 
@@ -37,6 +37,7 @@ defmodule Resource.ResourcePool do
       end)
 
     new_resources = resources_unchanged ++ released_resources
+    %ResourcePool{state | resources: new_resources}
   end
 
   @impl true
@@ -83,16 +84,16 @@ defmodule Resource.ResourcePool do
   end
 
   @impl true
-  def handle_call({:release_resource, seed}, {from_pid, _tag}, state = %ResourcePool{}) do
-    # TODO implement.
-    {:reply, :ok, state}
+  def handle_call({:release_resource, seed}, {pid, _tag}, state = %ResourcePool{}) do
+    new_state = release_resource_from_state(pid, state)
+    {:reply, :ok, new_state}
   end
 
   @impl true
-  def handle_info({:DOWN, ref, :process, _pid, status}, state) do
+  def handle_info({:DOWN, _ref, :process, pid, status}, state) do
     Logger.warn("Process went down with status #{inspect(status)}")
 
-    new_state = release_resource_from_state(ref, state)
+    new_state = release_resource_from_state(pid, state)
     {:noreply, new_state}
   end
 end
