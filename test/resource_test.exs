@@ -13,9 +13,9 @@ defmodule ResourceTest do
     %{resource_pool: resource_pool}
   end
 
-  test "test resource pool", %{resource_pool: resource_pool} do
-    {:new_spawn, {:spawned, :seed}} = Resource.ResourcePool.resource_request(:seed)
+  test "resource newly spawned", %{resource_pool: resource_pool} do
+    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
     :ok = Resource.ResourcePool.release_resource(:seed)
-    {:new_spawn, {:spawned, :seed}} = Resource.ResourcePool.resource_request(:seed)
+    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
   end
 end
