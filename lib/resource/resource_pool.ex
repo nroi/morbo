@@ -20,6 +20,7 @@ defmodule Resource.ResourcePool do
   end
 
   defp release_resource_from_state(pid, state = %ResourcePool{}) do
+    Logger.debug("Looking for resource with pid #{inspect pid}. State is #{inspect state}")
     {resources_unchanged, resources_to_release} =
       Enum.split_with(state.resources, fn
         %Resource{owner: {ref, ^pid}} -> false
@@ -35,6 +36,8 @@ defmodule Resource.ResourcePool do
       Enum.map(resources_to_release, fn r = %Resource{state: :locked} ->
         %{r | state: :released}
       end)
+
+    Logger.debug("Released resources: #{inspect released_resources}")
 
     new_resources = resources_unchanged ++ released_resources
     %ResourcePool{state | resources: new_resources}
@@ -57,7 +60,7 @@ defmodule Resource.ResourcePool do
         %Resource{} -> nil
       end)
 
-    spawn =
+    annotated_spawn =
       case maybe_spawn do
         nil ->
           Logger.debug("No released resource exists for this seed: Creating a new one.")
@@ -65,9 +68,11 @@ defmodule Resource.ResourcePool do
           state.transfer_ownership_to.(from_pid, new_spawn)
           {:new_spawn, new_spawn}
 
-        s ->
-          {:existing_spawn, s}
+        %Resource{spawn: spawn} ->
+          {:existing_spawn, spawn}
       end
+
+    {_annotation, spawn} = annotated_spawn
 
     ref = Process.monitor(from_pid)
 
@@ -78,9 +83,11 @@ defmodule Resource.ResourcePool do
       owner: {ref, from_pid}
     }
 
-    new_state = %{state | resources: [new_resource | state.resources]}
+    Logger.debug("Storing new resource with pid #{inspect from_pid}")
 
-    {:reply, spawn, state}
+    new_state = %ResourcePool{state | resources: [new_resource | state.resources]}
+
+    {:reply, annotated_spawn, new_state}
   end
 
   @impl true
