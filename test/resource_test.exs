@@ -41,6 +41,15 @@ defmodule ResourceTest do
     {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
   end
 
+  test "resource not removed too early" do
+    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    :ok = Resource.ResourcePool.release_resource(:seed1)
+    {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    :timer.sleep(@remove_resource_after * 2)
+    :ok = Resource.ResourcePool.release_resource(:seed1)
+    {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+  end
+
   test "resource released when release holder has crashed" do
     task =
       Task.async(fn ->
