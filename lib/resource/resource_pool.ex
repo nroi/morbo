@@ -89,6 +89,8 @@ defmodule Resource.ResourcePool do
 
     Logger.debug("Storing new resource with pid #{inspect(from_pid)}")
 
+    # TODO this isn't correct: When we already have a :released resource with the given seed, we
+    # want this resource to be transferred into the :locked state, not create a new resource.
     new_state = %ResourcePool{state | resources: [new_resource | state.resources]}
 
     {:reply, annotated_spawn, new_state}
