@@ -58,14 +58,14 @@ defmodule Resource.ResourcePool do
   def handle_call({:resource_request, seed}, {from_pid, _tag}, state = %ResourcePool{}) do
     Logger.debug("Resource requested: #{inspect(seed)}")
 
-    maybe_spawn =
+    maybe_resource =
       Enum.find(state.resources, fn
         %Resource{state: :released, seed: ^seed, spawn: spawn} -> true
         %Resource{} -> false
       end)
 
     annotated_spawn =
-      case maybe_spawn do
+      case maybe_resource do
         nil ->
           Logger.debug("No released resource exists for this seed: Creating a new one.")
           new_spawn = state.seed_to_spawn.(seed)
