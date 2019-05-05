@@ -6,7 +6,8 @@ defmodule Resource.ResourcePool do
   defstruct seed_to_spawn: nil,
             close_spawn: nil,
             transfer_ownership_to: nil,
-            resources: []
+            resources: [],
+            remove_resource_after: nil
 
   def start_link(initial_state = %Resource.ResourcePool{}) do
     GenServer.start_link(__MODULE__, initial_state, name: __MODULE__)
@@ -21,16 +22,18 @@ defmodule Resource.ResourcePool do
   end
 
   defp release_resource_from_state(pid, state = %ResourcePool{}) do
-    Logger.debug("Looking for resource with pid #{inspect pid}. State is #{inspect state}")
+    Logger.debug("Looking for resource with pid #{inspect(pid)}. State is #{inspect(state)}")
+
     {resources_unchanged, resources_to_release} =
       Enum.split_with(state.resources, fn
         %Resource{owner: {ref, ^pid}} -> false
         %Resource{} -> true
       end)
 
-    Enum.each(resources_to_release, fn %Resource{owner: {ref, _pid}, spawn: spawn} ->
+    Enum.each(resources_to_release, fn r = %Resource{owner: {ref, _pid}, spawn: spawn} ->
       state.transfer_ownership_to.(self(), spawn)
       true = Process.demonitor(ref)
+      Process.send_after(self(), {:remove_resource, r}, 5000)
     end)
 
     released_resources =
@@ -38,7 +41,7 @@ defmodule Resource.ResourcePool do
         %{r | state: :released}
       end)
 
-    Logger.debug("Released resources: #{inspect released_resources}")
+    Logger.debug("Released resources: #{inspect(released_resources)}")
 
     new_resources = resources_unchanged ++ released_resources
     %ResourcePool{state | resources: new_resources}
@@ -84,7 +87,7 @@ defmodule Resource.ResourcePool do
       owner: {ref, from_pid}
     }
 
-    Logger.debug("Storing new resource with pid #{inspect from_pid}")
+    Logger.debug("Storing new resource with pid #{inspect(from_pid)}")
 
     new_state = %ResourcePool{state | resources: [new_resource | state.resources]}
 
@@ -98,10 +101,17 @@ defmodule Resource.ResourcePool do
   end
 
   @impl true
-  def handle_info({:DOWN, _ref, :process, pid, status}, state) do
+  def handle_info({:DOWN, _ref, :process, pid, status}, state = %ResourcePool{}) do
     Logger.warn("Process went down with status #{inspect(status)}")
-
     new_state = release_resource_from_state(pid, state)
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_info({:remove_resource, r = %Resource{}}, state = %ResourcePool{}) do
+    Logger.debug("Remove resource: #{inspect(r)}")
+    new_resources = List.delete(state.resources, r)
+    new_state = %ResourcePool{state | resources: new_resources}
     {:noreply, new_state}
   end
 end
