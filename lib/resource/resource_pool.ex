@@ -60,8 +60,8 @@ defmodule Resource.ResourcePool do
 
     maybe_spawn =
       Enum.find(state.resources, fn
-        %Resource{state: :released, seed: ^seed, spawn: spawn} -> spawn
-        %Resource{} -> nil
+        %Resource{state: :released, seed: ^seed, spawn: spawn} -> true
+        %Resource{} -> false
       end)
 
     annotated_spawn =
