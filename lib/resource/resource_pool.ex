@@ -30,16 +30,16 @@ defmodule Resource.ResourcePool do
         %Resource{} -> true
       end)
 
-    Enum.each(resources_to_release, fn r = %Resource{owner: {ref, _pid}, spawn: spawn} ->
-      state.transfer_ownership_to.(self(), spawn)
-      true = Process.demonitor(ref)
-      Process.send_after(self(), {:remove_resource, r}, 5000)
-    end)
-
     released_resources =
       Enum.map(resources_to_release, fn r = %Resource{state: :locked} ->
         %{r | state: :released}
       end)
+
+    Enum.each(released_resources, fn r = %Resource{owner: {ref, _pid}, spawn: spawn} ->
+      state.transfer_ownership_to.(self(), spawn)
+      true = Process.demonitor(ref)
+      Process.send_after(self(), {:remove_resource, r}, state.remove_resource_after)
+    end)
 
     Logger.debug("Released resources: #{inspect(released_resources)}")
 
@@ -112,6 +112,7 @@ defmodule Resource.ResourcePool do
     Logger.debug("Remove resource: #{inspect(r)}")
     new_resources = List.delete(state.resources, r)
     new_state = %ResourcePool{state | resources: new_resources}
+    state.close_spawn.(r.spawn)
     {:noreply, new_state}
   end
 end
