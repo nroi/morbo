@@ -4,6 +4,7 @@ defmodule Resource.ResourcePool do
   require Logger
 
   defstruct seed_to_spawn: nil,
+            close_spawn: nil,
             transfer_ownership_to: nil,
             resources: []
 
