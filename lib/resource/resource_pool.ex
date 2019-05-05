@@ -64,6 +64,12 @@ defmodule Resource.ResourcePool do
         %Resource{} -> false
       end)
 
+    resources_to_remove =
+      case maybe_resource do
+        nil -> []
+        r = %Resource{} -> [r]
+      end
+
     annotated_spawn =
       case maybe_resource do
         nil ->
@@ -76,7 +82,7 @@ defmodule Resource.ResourcePool do
           {:existing_spawn, spawn}
       end
 
-    {_annotation, spawn} = annotated_spawn
+    {annotation, spawn} = annotated_spawn
 
     ref = Process.monitor(from_pid)
 
@@ -91,7 +97,25 @@ defmodule Resource.ResourcePool do
 
     # TODO this isn't correct: When we already have a :released resource with the given seed, we
     # want this resource to be transferred into the :locked state, not create a new resource.
-    new_state = %ResourcePool{state | resources: [new_resource | state.resources]}
+    existing_resources =
+      Enum.filter(state.resources, fn r = %Resource{} ->
+        not Enum.member?(resources_to_remove, r)
+      end)
+
+    new_resources = [new_resource | existing_resources]
+    new_state = %ResourcePool{state | resources: new_resources}
+
+    new_len =
+      case annotation do
+        :new_spawn -> Enum.count(state.resources) + 1
+        :existing_spawn -> Enum.count(state.resources)
+      end
+
+    # Assertion: the new number of resources has either not changed, or increased by 1.
+    :ok =
+      case Enum.count(new_resources) do
+        ^new_len -> :ok
+      end
 
     {:reply, annotated_spawn, new_state}
   end
