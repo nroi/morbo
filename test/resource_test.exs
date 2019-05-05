@@ -19,4 +19,9 @@ defmodule ResourceTest do
     {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
   end
 
+  test "new spawn created when previous spawn still locked", %{resource_pool: resource_pool} do
+    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+  end
+
 end
