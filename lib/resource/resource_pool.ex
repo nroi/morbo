@@ -15,6 +15,10 @@ defmodule Resource.ResourcePool do
     GenServer.call(__MODULE__, {:resource_request, seed})
   end
 
+  def release_resource(seed) do
+    GenServer.call(__MODULE__, {:release_resource, seed})
+  end
+
   @impl true
   def init(initial_state) do
     Logger.debug("Starting gen_server with #{inspect(initial_state)}")
@@ -50,7 +54,7 @@ defmodule Resource.ResourcePool do
       state: :locked,
       seed: seed,
       spawn: spawn,
-      owner: ref
+      owner: {ref, from_pid}
     }
 
     new_state = %{state | resources: [new_resource | state.resources]}
@@ -59,16 +63,22 @@ defmodule Resource.ResourcePool do
   end
 
   @impl true
+  def handle_call({:release_resource, seed}, {from_pid, _tag}, state = %ResourcePool{}) do
+    # TODO implement.
+    {:reply, :ok, state}
+  end
+
+  @impl true
   def handle_info({:DOWN, ref, :process, _pid, status}, state) do
     Logger.warn("Process went down with status #{inspect(status)}")
 
     {resources_unchanged, resources_to_release} =
       Enum.split_with(state.resources, fn
-        %Resource{owner: ^ref} -> false
+        %Resource{owner: {^ref, _pid}} -> false
         %Resource{} -> true
       end)
 
-    Enum.each(resources_to_release, fn %Resource{owner: ref, spawn: spawn} ->
+    Enum.each(resources_to_release, fn %Resource{owner: {ref, _pid}, spawn: spawn} ->
       state.transfer_ownership_to.(self(), spawn)
       true = Process.demonitor(ref)
     end)
