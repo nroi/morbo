@@ -50,7 +50,7 @@ defmodule ResourceTest do
     {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
   end
 
-  test "resource released when release holder has crashed" do
+  test "resource released when release process has exited" do
     task =
       Task.async(fn ->
         Resource.ResourcePool.resource_request(:seed1)
