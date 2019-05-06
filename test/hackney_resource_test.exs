@@ -43,5 +43,15 @@ defmodule HackneyResourceTest do
     :ok = Resource.ResourcePool.release_resource(@hostname)
   end
 
+  test "Connections are closed gracefully when the resource holder exits", %{resource_pool: _resource_pool} do
+    task =
+      Task.async(fn ->
+        {:new_spawn, conn_ref} = Resource.ResourcePool.resource_request(@hostname)
+      end)
+    {:new_spawn, conn_ref} = Task.await(task)
+    request = {:get, "/", [], ""}
+    {:error, :closed} = :hackney.send_request(conn_ref, request)
+  end
+
 
 end
