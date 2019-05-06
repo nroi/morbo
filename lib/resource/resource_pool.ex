@@ -72,7 +72,7 @@ defmodule Resource.ResourcePool do
 
   @impl true
   def handle_call({:resource_request, seed}, {from_pid, _tag}, state = %ResourcePool{}) do
-    Logger.debug("Resource requested: #{inspect(seed)}, pid: #{inspect from_pid}")
+    Logger.debug("Resource requested: #{inspect(seed)}, pid: #{inspect(from_pid)}")
 
     maybe_resource = find_released_resource_matching_seed(state.resources, seed)
 
