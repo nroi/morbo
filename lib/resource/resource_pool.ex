@@ -31,8 +31,8 @@ defmodule Resource.ResourcePool do
       end)
 
     released_resources =
-      Enum.map(resources_to_release, fn r = %Resource{state: :locked} ->
-        %{r | state: :released}
+      Enum.map(resources_to_release, fn r = %Resource{status: :locked} ->
+        %{r | status: :released}
       end)
 
     Enum.each(released_resources, fn r = %Resource{owner: {ref, _pid}, spawn: spawn} ->
@@ -49,11 +49,18 @@ defmodule Resource.ResourcePool do
 
   defp locked_resource(seed, spawn, owner = {_ref, _pid}) do
     %Resource{
-      state: :locked,
+      status: :locked,
       seed: seed,
       spawn: spawn,
       owner: owner
     }
+  end
+
+  defp find_released_resource_matching_seed(resources, seed) do
+    Enum.find(resources, fn
+      %Resource{status: :released, seed: ^seed} -> true
+      %Resource{} -> false
+    end)
   end
 
   @impl true
@@ -67,11 +74,7 @@ defmodule Resource.ResourcePool do
   def handle_call({:resource_request, seed}, {from_pid, _tag}, state = %ResourcePool{}) do
     Logger.debug("Resource requested: #{inspect(seed)}, pid: #{inspect from_pid}")
 
-    maybe_resource =
-      Enum.find(state.resources, fn
-        %Resource{state: :released, seed: ^seed} -> true
-        %Resource{} -> false
-      end)
+    maybe_resource = find_released_resource_matching_seed(state.resources, seed)
 
     annotated_spawn =
       case maybe_resource do

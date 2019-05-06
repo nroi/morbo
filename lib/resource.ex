@@ -1,5 +1,5 @@
 defmodule Resource do
-  defstruct state: :active,
+  defstruct status: :active,
             seed: nil,
             spawn: nil,
             owner: nil
