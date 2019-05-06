@@ -33,15 +33,15 @@ defmodule HackneyResourceTest do
     :ok = Resource.ResourcePool.release_resource(@hostname)
   end
 
-  @tag :wip
   test "Execute some GET requests", %{resource_pool: _resource_pool} do
     {:new_spawn, conn_ref} = Resource.ResourcePool.resource_request(@hostname)
-    req = {:get, "/", [], ""}
+    request = {:get, "/", [], ""}
     for _ <- 1..10 do
-      {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, req)
+      {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, request)
       {:ok, body} = :hackney.body(conn_ref)
     end
     :ok = Resource.ResourcePool.release_resource(@hostname)
   end
+
 
 end
