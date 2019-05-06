@@ -53,5 +53,11 @@ defmodule HackneyResourceTest do
     {:error, :closed} = :hackney.send_request(conn_ref, request)
   end
 
+  test "hackney's connection pool is not exhausted after many requests to the same host" do
+    for _ <- 1..100 do
+      {_, conn_ref} = Resource.ResourcePool.resource_request(@hostname)
+      :ok = Resource.ResourcePool.release_resource(@hostname)
+    end
+  end
 
 end
