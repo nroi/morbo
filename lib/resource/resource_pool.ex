@@ -26,7 +26,7 @@ defmodule Resource.ResourcePool do
 
     {resources_unchanged, resources_to_release} =
       Enum.split_with(state.resources, fn
-        %Resource{owner: {ref, ^pid}} -> false
+        %Resource{owner: {_ref, ^pid}} -> false
         %Resource{} -> true
       end)
 
@@ -60,7 +60,7 @@ defmodule Resource.ResourcePool do
 
     maybe_resource =
       Enum.find(state.resources, fn
-        %Resource{state: :released, seed: ^seed, spawn: spawn} -> true
+        %Resource{state: :released, seed: ^seed} -> true
         %Resource{} -> false
       end)
 
@@ -119,7 +119,7 @@ defmodule Resource.ResourcePool do
   end
 
   @impl true
-  def handle_call({:release_resource, seed}, {pid, _tag}, state = %ResourcePool{}) do
+  def handle_call({:release_resource, _seed}, {pid, _tag}, state = %ResourcePool{}) do
     new_state = release_resource_from_state(pid, state)
     {:reply, :ok, new_state}
   end
