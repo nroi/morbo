@@ -47,6 +47,15 @@ defmodule Resource.ResourcePool do
     %ResourcePool{state | resources: new_resources}
   end
 
+  defp locked_resource(seed, spawn, owner = {_ref, _pid}) do
+    %Resource{
+      state: :locked,
+      seed: seed,
+      spawn: spawn,
+      owner: owner
+    }
+  end
+
   @impl true
   def init(initial_state) do
     Logger.debug("Starting gen_server with #{inspect(initial_state)}")
@@ -56,19 +65,13 @@ defmodule Resource.ResourcePool do
 
   @impl true
   def handle_call({:resource_request, seed}, {from_pid, _tag}, state = %ResourcePool{}) do
-    Logger.debug("Resource requested: #{inspect(seed)}")
+    Logger.debug("Resource requested: #{inspect(seed)}, pid: #{inspect from_pid}")
 
     maybe_resource =
       Enum.find(state.resources, fn
         %Resource{state: :released, seed: ^seed} -> true
         %Resource{} -> false
       end)
-
-    resources_to_remove =
-      case maybe_resource do
-        nil -> []
-        r = %Resource{} -> [r]
-      end
 
     annotated_spawn =
       case maybe_resource do
@@ -86,14 +89,13 @@ defmodule Resource.ResourcePool do
 
     ref = Process.monitor(from_pid)
 
-    new_resource = %Resource{
-      state: :locked,
-      seed: seed,
-      spawn: spawn,
-      owner: {ref, from_pid}
-    }
+    new_resource = locked_resource(seed, spawn, {ref, from_pid})
 
-    Logger.debug("Storing new resource with pid #{inspect(from_pid)}")
+    resources_to_remove =
+      case maybe_resource do
+        nil -> []
+        r = %Resource{} -> [r]
+      end
 
     existing_resources =
       Enum.filter(state.resources, fn r = %Resource{} ->
