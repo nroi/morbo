@@ -95,8 +95,6 @@ defmodule Resource.ResourcePool do
 
     Logger.debug("Storing new resource with pid #{inspect(from_pid)}")
 
-    # TODO this isn't correct: When we already have a :released resource with the given seed, we
-    # want this resource to be transferred into the :locked state, not create a new resource.
     existing_resources =
       Enum.filter(state.resources, fn r = %Resource{} ->
         not Enum.member?(resources_to_remove, r)
