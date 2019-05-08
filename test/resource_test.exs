@@ -1,11 +1,10 @@
 defmodule ResourceTest do
   use ExUnit.Case
-  doctest Resource
 
   @remove_resource_after 10
 
   setup do
-    init_state = %Resource.ResourcePool{
+    init_state = %Morbo.ResourcePool{
       seed_to_spawn: fn seed -> {:spawned, seed} end,
       transfer_ownership_to: fn _new_pid, spawn -> :ok end,
       close_spawn: fn spawn -> :ok end,
@@ -13,50 +12,50 @@ defmodule ResourceTest do
       remove_resource_after: @remove_resource_after
     }
 
-    resource_pool = start_supervised!({Resource.ResourcePool, init_state})
+    resource_pool = start_supervised!({Morbo.ResourcePool, init_state})
     %{resource_pool: resource_pool}
   end
 
   test "spawn fetched from existing spawn", %{resource_pool: resource_pool} do
-    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
-    :ok = Resource.ResourcePool.release_resource(:seed1)
-    {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+    :ok = Morbo.ResourcePool.release_resource(:seed1)
+    {:existing_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
   end
 
   test "new spawn created when previous spawn still locked", %{resource_pool: resource_pool} do
-    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
-    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+    {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
   end
 
   test "new spawn created after a previous spawn released", %{resource_pool: resource_pool} do
-    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
-    :ok = Resource.ResourcePool.release_resource(:seed1)
-    {:new_spawn, {:spawned, :seed2}} = Resource.ResourcePool.resource_request(:seed2)
+    {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+    :ok = Morbo.ResourcePool.release_resource(:seed1)
+    {:new_spawn, {:spawned, :seed2}} = Morbo.ResourcePool.resource_request(:seed2)
   end
 
   test "resource removed after time interval elapsed seconds", %{resource_pool: resource_pool} do
-    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
-    :ok = Resource.ResourcePool.release_resource(:seed1)
+    {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+    :ok = Morbo.ResourcePool.release_resource(:seed1)
     :timer.sleep(@remove_resource_after * 2)
-    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
   end
 
   test "resource not removed too early" do
-    {:new_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
-    :ok = Resource.ResourcePool.release_resource(:seed1)
-    {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+    :ok = Morbo.ResourcePool.release_resource(:seed1)
+    {:existing_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
     :timer.sleep(@remove_resource_after * 2)
-    :ok = Resource.ResourcePool.release_resource(:seed1)
-    {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    :ok = Morbo.ResourcePool.release_resource(:seed1)
+    {:existing_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
   end
 
   test "resource released when release process has exited" do
     task =
       Task.async(fn ->
-        Resource.ResourcePool.resource_request(:seed1)
+        Morbo.ResourcePool.resource_request(:seed1)
       end)
 
     {:new_spawn, {:spawned, :seed1}} = Task.await(task)
-    {:existing_spawn, {:spawned, :seed1}} = Resource.ResourcePool.resource_request(:seed1)
+    {:existing_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
   end
 end

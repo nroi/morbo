@@ -1,18 +1,17 @@
 defmodule HackneyResourceTest do
   use ExUnit.Case
-  doctest Resource
 
   @hostname "v4.ident.me"
   @remove_resource_after 250
 
   setup do
     init_state = get_init_state()
-    resource_pool = start_supervised!({Resource.ResourcePool, init_state})
+    resource_pool = start_supervised!({Morbo.ResourcePool, init_state})
     %{resource_pool: resource_pool}
   end
 
   def get_init_state() do
-    %Resource.ResourcePool{
+    %Morbo.ResourcePool{
       seed_to_spawn: fn hostname ->
                         {:ok, conn_ref} = :hackney.connect(:hackney_ssl, hostname, 443, [])
                         conn_ref
@@ -27,26 +26,26 @@ defmodule HackneyResourceTest do
   end
 
   test "connection fetched from existing connection", %{resource_pool: _resource_pool} do
-    {:new_spawn, conn_ref} = Resource.ResourcePool.resource_request(@hostname)
-    :ok = Resource.ResourcePool.release_resource(@hostname)
-    {:existing_spawn, ^conn_ref} = Resource.ResourcePool.resource_request(@hostname)
-    :ok = Resource.ResourcePool.release_resource(@hostname)
+    {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
+    :ok = Morbo.ResourcePool.release_resource(@hostname)
+    {:existing_spawn, ^conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
+    :ok = Morbo.ResourcePool.release_resource(@hostname)
   end
 
   test "Execute some GET requests", %{resource_pool: _resource_pool} do
-    {:new_spawn, conn_ref} = Resource.ResourcePool.resource_request(@hostname)
+    {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
     request = {:get, "/", [], ""}
     for _ <- 1..10 do
       {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, request)
       {:ok, body} = :hackney.body(conn_ref)
     end
-    :ok = Resource.ResourcePool.release_resource(@hostname)
+    :ok = Morbo.ResourcePool.release_resource(@hostname)
   end
 
   test "Connections are closed gracefully when the resource holder exits", %{resource_pool: _resource_pool} do
     task =
       Task.async(fn ->
-        {:new_spawn, conn_ref} = Resource.ResourcePool.resource_request(@hostname)
+        {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
       end)
     {:new_spawn, conn_ref} = Task.await(task)
     request = {:get, "/", [], ""}
@@ -55,8 +54,8 @@ defmodule HackneyResourceTest do
 
   test "hackney's connection pool is not exhausted after many requests to the same host" do
     for _ <- 1..100 do
-      {_, conn_ref} = Resource.ResourcePool.resource_request(@hostname)
-      :ok = Resource.ResourcePool.release_resource(@hostname)
+      {_, conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
+      :ok = Morbo.ResourcePool.release_resource(@hostname)
     end
   end
 

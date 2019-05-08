@@ -1,4 +1,4 @@
-defmodule Resource do
+defmodule Morbo.Resource do
   defstruct status: :active,
             seed: nil,
             spawn: nil,

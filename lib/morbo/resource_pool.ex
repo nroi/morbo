@@ -1,5 +1,6 @@
-defmodule Resource.ResourcePool do
-  alias Resource.ResourcePool
+defmodule Morbo.ResourcePool do
+  alias Morbo.ResourcePool
+  alias Morbo.Resource
   use GenServer
   require Logger
 
@@ -9,7 +10,7 @@ defmodule Resource.ResourcePool do
             resources: [],
             remove_resource_after: nil
 
-  def start_link(initial_state = %Resource.ResourcePool{}) do
+  def start_link(initial_state = %ResourcePool{}) do
     GenServer.start_link(__MODULE__, initial_state, name: __MODULE__)
   end
 
