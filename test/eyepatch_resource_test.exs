@@ -43,7 +43,6 @@ defmodule EyepatchResourceTest do
       connect_hackney_inet(),
       connect_hackney_inet6(),
       &:inet.getaddrs/2,
-      nil,
       &transfer_ownership_to/2
     )
   end
