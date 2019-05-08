@@ -51,15 +51,15 @@ defmodule EyepatchResourceTest do
     )
   end
 
-  def transfer_ownership_to(new_pid, {:ok, {protocol, conn_ref}}) do
+  def transfer_ownership_to(new_pid, {:ok, {_protocol, conn_ref}}) do
     :hackney.controlling_process(conn_ref, new_pid)
   end
 
-  def transfer_ownership_to(new_pid, {:error, _}) do
+  def transfer_ownership_to(_new_pid, {:error, _}) do
     :ok
   end
 
-  def close_spawn({:ok, {protocol, conn_ref}}) do
+  def close_spawn({:ok, {_protocol, conn_ref}}) do
     :ok = :hackney.close(conn_ref)
   end
 

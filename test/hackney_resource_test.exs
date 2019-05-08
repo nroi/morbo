@@ -37,7 +37,7 @@ defmodule HackneyResourceTest do
     request = {:get, "/", [], ""}
     for _ <- 1..10 do
       {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, request)
-      {:ok, body} = :hackney.body(conn_ref)
+      {:ok, _body} = :hackney.body(conn_ref)
     end
     :ok = Morbo.ResourcePool.release_resource(@hostname)
   end
@@ -45,7 +45,7 @@ defmodule HackneyResourceTest do
   test "Connections are closed gracefully when the resource holder exits", %{resource_pool: _resource_pool} do
     task =
       Task.async(fn ->
-        {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
+        {:new_spawn, _conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
       end)
     {:new_spawn, conn_ref} = Task.await(task)
     request = {:get, "/", [], ""}
@@ -54,7 +54,7 @@ defmodule HackneyResourceTest do
 
   test "hackney's connection pool is not exhausted after many requests to the same host" do
     for _ <- 1..100 do
-      {_, conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
+      {_, _conn_ref} = Morbo.ResourcePool.resource_request(@hostname)
       :ok = Morbo.ResourcePool.release_resource(@hostname)
     end
   end
