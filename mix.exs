@@ -32,7 +32,7 @@ defmodule Morbo.MixProject do
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
       {:excoveralls, "~> 0.11.0", only: :test},
       {:hackney, "~> 1.15", only: :test},
-      {:eyepatch, git: "https://github.com/nroi/eyepatch.git", tag: "v0.1.9", only: :test}
+      {:eyepatch, git: "https://github.com/nroi/eyepatch.git", tag: "v0.1.10", only: :test}
     ]
   end
 end

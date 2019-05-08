@@ -11,12 +11,10 @@ defmodule EyepatchResourceTest do
     %{resource_pool: resource_pool}
   end
 
-  defp connect_hackney_inet(), do: &connect_hackney(&1, &2, :inet, &3, &4, &5)
-  defp connect_hackney_inet6(), do: &connect_hackney(&1, &2, :inet6, &3, &4, &5)
+  defp connect_hackney_inet(), do: &connect_hackney(&1, &2, :inet, &3, &4)
+  defp connect_hackney_inet6(), do: &connect_hackney(&1, &2, :inet6, &3, &4)
 
-
-  def connect_hackney(uri, ip_address, protocol, connect_timeout, _headers, _pid) do
-    # TODO _headers are ignored, perhaps this is a symptom of a design issue.
+  def connect_hackney(uri, ip_address, protocol, connect_timeout, _pid) do
     ip_address =
       case :inet.ntoa(ip_address) do
         {:error, :einval} -> raise("Unable to parse ip address: #{inspect(ip_address)}")
@@ -45,7 +43,6 @@ defmodule EyepatchResourceTest do
       connect_hackney_inet(),
       connect_hackney_inet6(),
       &:inet.getaddrs/2,
-      [],
       nil,
       &transfer_ownership_to/2
     )
