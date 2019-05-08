@@ -24,4 +24,4 @@ resource-*.tar
 
 /.idea/
 
-resource.iml
+morbo.iml
