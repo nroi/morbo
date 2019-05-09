@@ -77,7 +77,6 @@ defmodule EyepatchResourceTest do
     :ok = Morbo.ResourcePool.release_resource(@uri)
   end
 
-  @tag :wip
   test "Execute some GET requests (eyepatch)", %{resource_pool: _resource_pool} do
     {:new_spawn, result} = Morbo.ResourcePool.resource_request(@uri)
     {:ok, {_protocol, conn_ref}} = result

@@ -23,22 +23,37 @@ defmodule Morbo.ResourcePool do
   end
 
   defp release_resource_from_state(pid, state = %ResourcePool{}) do
-    Logger.debug("Looking for resource with pid #{inspect(pid)}. State is #{inspect(state)}")
+    filter = fn
+      %Resource{owner: {_ref, ^pid}} -> true
+      %Resource{} -> false
+    end
 
-    {resources_unchanged, resources_to_release} =
-      Enum.split_with(state.resources, fn
-        %Resource{owner: {_ref, ^pid}} -> false
-        %Resource{} -> true
-      end)
+    release_resource_from_state_via_filter(filter, state)
+  end
+
+  defp release_resource_from_state(pid, seed, state = %ResourcePool{}) do
+    filter = fn
+      %Resource{owner: {_ref, ^pid}, seed: ^seed} -> true
+      %Resource{} -> false
+    end
+
+    release_resource_from_state_via_filter(filter, state)
+  end
+
+  defp release_resource_from_state_via_filter(filter, state = %ResourcePool{}) do
+
+    {resources_to_release, resources_unchanged} = Enum.split_with(state.resources, filter)
 
     released_resources =
       Enum.map(resources_to_release, fn r = %Resource{status: :locked} ->
-        %{r | status: :released}
+        %Resource{r | status: :released}
       end)
 
     Enum.each(released_resources, fn r = %Resource{owner: {ref, _pid}, spawn: spawn} ->
       state.transfer_ownership_to.(self(), spawn)
       true = Process.demonitor(ref)
+      # TODO store the timer_ref and cancel the timer if another request for this
+      # resource arrives.
       Process.send_after(self(), {:remove_resource, r}, state.remove_resource_after)
     end)
 
@@ -122,8 +137,8 @@ defmodule Morbo.ResourcePool do
   end
 
   @impl true
-  def handle_call({:release_resource, _seed}, {pid, _tag}, state = %ResourcePool{}) do
-    new_state = release_resource_from_state(pid, state)
+  def handle_call({:release_resource, seed}, {pid, _tag}, state = %ResourcePool{}) do
+    new_state = release_resource_from_state(pid, seed, state)
     {:reply, :ok, new_state}
   end
 
