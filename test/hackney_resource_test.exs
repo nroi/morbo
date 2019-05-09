@@ -6,8 +6,8 @@ defmodule HackneyResourceTest do
 
   setup do
     init_state = get_init_state()
-    resource_pool = start_supervised!({Morbo.ResourcePool, init_state})
-    %{resource_pool: resource_pool}
+    start_supervised!({Morbo.ResourcePool, init_state})
+    :ok
   end
 
   def get_init_state() do
@@ -29,14 +29,14 @@ defmodule HackneyResourceTest do
     }
   end
 
-  test "connection fetched from existing connection", %{resource_pool: _resource_pool} do
+  test "connection fetched from existing connection" do
     {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(@default_resource)
     :ok = Morbo.ResourcePool.release_resource(@default_resource)
     {:existing_spawn, ^conn_ref} = Morbo.ResourcePool.resource_request(@default_resource)
     :ok = Morbo.ResourcePool.release_resource(@default_resource)
   end
 
-  test "Execute some GET requests", %{resource_pool: _resource_pool} do
+  test "Execute some GET requests" do
     {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(@default_resource)
     request = {:get, "/", [], ""}
     for _ <- 1..10 do
@@ -46,7 +46,7 @@ defmodule HackneyResourceTest do
     :ok = Morbo.ResourcePool.release_resource(@default_resource)
   end
 
-  test "Connections are closed gracefully when the resource holder exits", %{resource_pool: _resource_pool} do
+  test "Connections are closed gracefully when the resource holder exits" do
     task =
       Task.async(fn ->
         {:new_spawn, _conn_ref} = Morbo.ResourcePool.resource_request(@default_resource)
@@ -63,7 +63,6 @@ defmodule HackneyResourceTest do
     end
   end
 
-  @tag :wip
   test "hackney's connection pool is not exhausted after many requests to different hosts" do
     for i <- 1..100 do
       hostname = "#{i}.xnet.space"
@@ -74,6 +73,21 @@ defmodule HackneyResourceTest do
       {:ok, _body} = :hackney.body(conn_ref)
       :ok = Morbo.ResourcePool.release_resource(resource)
     end
+  end
+
+  test "Execute some GET requests on a host with keepalive disabled" do
+    # Apparently, hackney automatically re-establishes the connection when the
+    # socket has been closed by the server. When we enable and disable keepalive
+    # on the server, the only noticeable difference is that this test takes longer
+    # to complete, but it succeeds in both cases.
+    resource = {"nokeepalive.xnet.space", 80}
+    {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(resource)
+    request = {:get, "/", [], ""}
+    for _ <- 1..30 do
+      {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, request)
+      {:ok, body} = :hackney.body(conn_ref)
+    end
+    :ok = Morbo.ResourcePool.release_resource(resource)
   end
 
 end
