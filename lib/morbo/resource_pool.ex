@@ -8,7 +8,7 @@ defmodule Morbo.ResourcePool do
             close_spawn: nil,
             transfer_ownership_to: nil,
             resources: [],
-            remove_resource_after: nil
+            remove_resource_after_millisecs: nil
 
   def start_link(initial_state = %ResourcePool{}) do
     GenServer.start_link(__MODULE__, initial_state, name: __MODULE__)
@@ -54,7 +54,7 @@ defmodule Morbo.ResourcePool do
       true = Process.demonitor(ref)
       # TODO store the timer_ref and cancel the timer if another request for this
       # resource arrives.
-      Process.send_after(self(), {:remove_resource, r}, state.remove_resource_after)
+      Process.send_after(self(), {:remove_resource, r}, state.remove_resource_after_millisecs)
     end)
 
     Logger.debug("Released resources: #{inspect(released_resources)}")

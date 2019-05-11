@@ -3,7 +3,7 @@ defmodule EyepatchResourceTest do
   require Logger
 
   @uri "https://ident.me"
-  @remove_resource_after 250
+  @remove_resource_after_millisecs 250
 
   setup do
     init_state = get_init_state()
@@ -65,7 +65,7 @@ defmodule EyepatchResourceTest do
       transfer_ownership_to: &transfer_ownership_to/2,
       close_spawn: &close_spawn/1,
       resources: [],
-      remove_resource_after: @remove_resource_after
+      remove_resource_after_millisecs: @remove_resource_after_millisecs
     }
   end
 

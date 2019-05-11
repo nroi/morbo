@@ -1,7 +1,7 @@
 defmodule ResourceTest do
   use ExUnit.Case
 
-  @remove_resource_after 10
+  @remove_resource_after_millisecs 10
 
   setup do
     init_state = %Morbo.ResourcePool{
@@ -9,7 +9,7 @@ defmodule ResourceTest do
       transfer_ownership_to: fn _new_pid, _spawn -> :ok end,
       close_spawn: fn _spawn -> :ok end,
       resources: [],
-      remove_resource_after: @remove_resource_after
+      remove_resource_after_millisecs: @remove_resource_after_millisecs
     }
 
     start_supervised!({Morbo.ResourcePool, init_state})
@@ -36,7 +36,7 @@ defmodule ResourceTest do
   test "resource removed after time interval elapsed seconds" do
     {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
     :ok = Morbo.ResourcePool.release_resource(:seed1)
-    :timer.sleep(@remove_resource_after * 2)
+    :timer.sleep(@remove_resource_after_millisecs * 2)
     {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
   end
 
@@ -44,7 +44,7 @@ defmodule ResourceTest do
     {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
     :ok = Morbo.ResourcePool.release_resource(:seed1)
     {:existing_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
-    :timer.sleep(@remove_resource_after * 2)
+    :timer.sleep(@remove_resource_after_millisecs * 2)
     :ok = Morbo.ResourcePool.release_resource(:seed1)
     {:existing_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
   end

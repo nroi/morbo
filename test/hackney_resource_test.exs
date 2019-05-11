@@ -2,7 +2,7 @@ defmodule HackneyResourceTest do
   use ExUnit.Case
 
   @default_resource {"v4.ident.me", 443}
-  @remove_resource_after 250
+  @remove_resource_after_millisecs 250
 
   setup do
     init_state = get_init_state()
@@ -25,7 +25,7 @@ defmodule HackneyResourceTest do
       end,
       close_spawn: fn conn_ref -> :ok = :hackney.close(conn_ref) end,
       resources: [],
-      remove_resource_after: @remove_resource_after
+      remove_resource_after_millisecs: @remove_resource_after_millisecs
     }
   end
 
