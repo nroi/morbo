@@ -85,7 +85,7 @@ defmodule HackneyResourceTest do
     request = {:get, "/", [], ""}
     for _ <- 1..30 do
       {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, request)
-      {:ok, body} = :hackney.body(conn_ref)
+      {:ok, _body} = :hackney.body(conn_ref)
     end
     :ok = Morbo.ResourcePool.release_resource(resource)
   end
