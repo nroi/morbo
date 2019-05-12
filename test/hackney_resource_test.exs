@@ -27,7 +27,8 @@ defmodule HackneyResourceTest do
       end,
       close_spawn: fn conn_ref -> :ok = :hackney.close(conn_ref) end,
       resources: [],
-      remove_resource_after_millisecs: @remove_resource_after_millisecs
+      remove_resource_after_millisecs: @remove_resource_after_millisecs,
+      owner_after_release: self()
     }
   end
 

@@ -70,7 +70,8 @@ defmodule EyepatchResourceTest do
       transfer_ownership_to: &transfer_ownership_to/2,
       close_spawn: &close_spawn/1,
       resources: [],
-      remove_resource_after_millisecs: @remove_resource_after_millisecs
+      remove_resource_after_millisecs: @remove_resource_after_millisecs,
+      owner_after_release: self()
     }
   end
 

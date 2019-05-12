@@ -9,7 +9,8 @@ defmodule ResourceTest do
       transfer_ownership_to: fn _new_pid, _spawn -> :ok end,
       close_spawn: fn _spawn -> :ok end,
       resources: [],
-      remove_resource_after_millisecs: @remove_resource_after_millisecs
+      remove_resource_after_millisecs: @remove_resource_after_millisecs,
+      owner_after_release: self()
     }
 
     pid = start_supervised!({Morbo.ResourcePool, init_state})

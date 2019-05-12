@@ -8,7 +8,8 @@ defmodule Morbo.ResourcePool do
             close_spawn: nil,
             transfer_ownership_to: nil,
             resources: [],
-            remove_resource_after_millisecs: nil
+            remove_resource_after_millisecs: nil,
+            owner_after_release: nil
 
   def start_link(initial_state = %ResourcePool{}) do
     GenServer.start_link(__MODULE__, initial_state, name: __MODULE__)
@@ -49,10 +50,7 @@ defmodule Morbo.ResourcePool do
       end)
 
     Enum.each(released_resources, fn r = %Resource{owner: {ref, _pid}, spawn: spawn} ->
-      # TODO this won't work as intended: If the resource (e.g. a socket) results in messages
-      # being sent to the new owner, then the ResourcePool process will receive these
-      # messages and it won't know what to do with them.
-      state.transfer_ownership_to.(self(), spawn)
+      state.transfer_ownership_to.(state.owner_after_release, spawn)
       true = Process.demonitor(ref)
       # TODO store the timer_ref and cancel the timer if another request for this
       # resource arrives.
