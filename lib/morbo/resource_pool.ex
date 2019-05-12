@@ -63,6 +63,18 @@ defmodule Morbo.ResourcePool do
     %ResourcePool{state | resources: new_resources}
   end
 
+  defp monitor_unless_already_monitored(resources, pid) do
+    existing_ref = Enum.find_value(resources, fn
+      %Resource{owner: {ref, ^pid}} -> ref
+      %Resource{owner: {_ref, _}} -> false
+    end)
+
+    case existing_ref do
+      nil -> Process.monitor(pid)
+      ref when is_reference(ref) -> ref
+    end
+  end
+
   defp locked_resource(seed, spawn, owner = {_ref, _pid}) do
     %Resource{
       status: :locked,
@@ -104,7 +116,9 @@ defmodule Morbo.ResourcePool do
       end
 
     {annotation, spawn} = annotated_spawn
-    ref = Process.monitor(from_pid)
+
+    ref = monitor_unless_already_monitored(state.resources, from_pid)
+
     new_resource = locked_resource(seed, spawn, {ref, from_pid})
 
     resources_to_remove =
