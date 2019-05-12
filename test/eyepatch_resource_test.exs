@@ -20,17 +20,22 @@ defmodule EyepatchResourceTest do
         {:error, :einval} -> raise("Unable to parse ip address: #{inspect(ip_address)}")
         x -> x
       end
-    Logger.debug("ip is: #{inspect ip_address}, protocol: #{protocol}")
+
+    Logger.debug("ip is: #{inspect(ip_address)}, protocol: #{protocol}")
 
     opts = [connect_timeout: connect_timeout, ssl_options: [{:verify, :verify_none}]]
-    transport = case uri.port do
-      80 -> :hackney_tcp
-      443 -> :hackney_ssl
-    end
+
+    transport =
+      case uri.port do
+        80 -> :hackney_tcp
+        443 -> :hackney_ssl
+      end
+
     case :hackney.connect(transport, ip_address, uri.port, opts) do
       {:ok, conn_ref} ->
-        Logger.debug("Successfully connected to #{uri.host} via #{inspect ip_address}")
+        Logger.debug("Successfully connected to #{uri.host} via #{inspect(ip_address)}")
         {:ok, {protocol, conn_ref}}
+
       {:error, reason} ->
         Logger.warn("Error while attempting to connect to #{uri.host}: #{inspect(reason)}")
         {:error, {protocol, reason}}
@@ -81,11 +86,13 @@ defmodule EyepatchResourceTest do
     {:new_spawn, result} = Morbo.ResourcePool.resource_request(@uri)
     {:ok, {_protocol, conn_ref}} = result
     request = {:get, "/", [], ""}
+
     for _ <- 1..10 do
       {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, request)
       {:ok, body} = :hackney.body(conn_ref)
-      Logger.debug("body: #{inspect body}")
+      Logger.debug("body: #{inspect(body)}")
     end
+
     :ok = Morbo.ResourcePool.release_resource(@uri)
   end
 end

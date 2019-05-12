@@ -41,7 +41,6 @@ defmodule Morbo.ResourcePool do
   end
 
   defp release_resource_from_state_via_filter(filter, state = %ResourcePool{}) do
-
     {resources_to_release, resources_unchanged} = Enum.split_with(state.resources, filter)
 
     released_resources =
@@ -64,10 +63,11 @@ defmodule Morbo.ResourcePool do
   end
 
   defp monitor_unless_already_monitored(resources, pid) do
-    existing_ref = Enum.find_value(resources, fn
-      %Resource{owner: {ref, ^pid}} -> ref
-      %Resource{owner: {_ref, _}} -> false
-    end)
+    existing_ref =
+      Enum.find_value(resources, fn
+        %Resource{owner: {ref, ^pid}} -> ref
+        %Resource{owner: {_ref, _}} -> false
+      end)
 
     case existing_ref do
       nil -> Process.monitor(pid)

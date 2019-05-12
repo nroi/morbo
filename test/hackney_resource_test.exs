@@ -13,10 +13,12 @@ defmodule HackneyResourceTest do
   def get_init_state() do
     %Morbo.ResourcePool{
       seed_to_spawn: fn {hostname, port} ->
-        transport = case port do
-          443 -> :hackney_ssl
-          80 -> :hackney_tcp
-        end
+        transport =
+          case port do
+            443 -> :hackney_ssl
+            80 -> :hackney_tcp
+          end
+
         {:ok, conn_ref} = :hackney.connect(transport, hostname, port, [])
         conn_ref
       end,
@@ -39,10 +41,12 @@ defmodule HackneyResourceTest do
   test "Execute some GET requests" do
     {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(@default_resource)
     request = {:get, "/", [], ""}
+
     for _ <- 1..10 do
       {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, request)
       {:ok, _body} = :hackney.body(conn_ref)
     end
+
     :ok = Morbo.ResourcePool.release_resource(@default_resource)
   end
 
@@ -51,6 +55,7 @@ defmodule HackneyResourceTest do
       Task.async(fn ->
         {:new_spawn, _conn_ref} = Morbo.ResourcePool.resource_request(@default_resource)
       end)
+
     {:new_spawn, conn_ref} = Task.await(task)
     request = {:get, "/", [], ""}
     {:error, :closed} = :hackney.send_request(conn_ref, request)
@@ -83,11 +88,12 @@ defmodule HackneyResourceTest do
     resource = {"nokeepalive.xnet.space", 80}
     {:new_spawn, conn_ref} = Morbo.ResourcePool.resource_request(resource)
     request = {:get, "/", [], ""}
+
     for _ <- 1..30 do
       {:ok, _, _, conn_ref} = :hackney.send_request(conn_ref, request)
       {:ok, _body} = :hackney.body(conn_ref)
     end
+
     :ok = Morbo.ResourcePool.release_resource(resource)
   end
-
 end
