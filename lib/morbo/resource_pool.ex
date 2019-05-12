@@ -49,6 +49,9 @@ defmodule Morbo.ResourcePool do
       end)
 
     Enum.each(released_resources, fn r = %Resource{owner: {ref, _pid}, spawn: spawn} ->
+      # TODO this won't work as intended: If the resource (e.g. a socket) results in messages
+      # being sent to the new owner, then the ResourcePool process will receive these
+      # messages and it won't know what to do with them.
       state.transfer_ownership_to.(self(), spawn)
       true = Process.demonitor(ref)
       # TODO store the timer_ref and cancel the timer if another request for this
