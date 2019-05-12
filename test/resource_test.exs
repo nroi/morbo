@@ -52,10 +52,22 @@ defmodule ResourceTest do
   test "resource released when release process has exited" do
     task =
       Task.async(fn ->
-        Morbo.ResourcePool.resource_request(:seed1)
+        {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
       end)
 
     {:new_spawn, {:spawned, :seed1}} = Task.await(task)
     {:existing_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+  end
+
+  @tag :wip
+  test "No errors occur when the same process has resources both in :released and in :locked state" do
+    task = Task.async(fn ->
+      {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+      {:new_spawn, {:spawned, :seed2}} = Morbo.ResourcePool.resource_request(:seed2)
+      :ok = Morbo.ResourcePool.release_resource(:seed2)
+    end)
+
+    Task.await(task)
+    :timer.sleep(@remove_resource_after_millisecs * 2)
   end
 end
