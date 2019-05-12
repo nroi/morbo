@@ -12,8 +12,8 @@ defmodule ResourceTest do
       remove_resource_after_millisecs: @remove_resource_after_millisecs
     }
 
-    start_supervised!({Morbo.ResourcePool, init_state})
-    :ok
+    pid = start_supervised!({Morbo.ResourcePool, init_state})
+    %{resource_pool: pid}
   end
 
   test "spawn fetched from existing spawn" do
@@ -60,14 +60,19 @@ defmodule ResourceTest do
   end
 
   @tag :wip
-  test "No errors occur when the same process has resources both in :released and in :locked state" do
-    task = Task.async(fn ->
-      {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
-      {:new_spawn, {:spawned, :seed2}} = Morbo.ResourcePool.resource_request(:seed2)
-      :ok = Morbo.ResourcePool.release_resource(:seed2)
-    end)
+  test "No errors occur when the same process has resources both in :released and in :locked state",
+       %{resource_pool: pid} do
+    task =
+      Task.async(fn ->
+        {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+        {:new_spawn, {:spawned, :seed2}} = Morbo.ResourcePool.resource_request(:seed2)
+        :ok = Morbo.ResourcePool.release_resource(:seed2)
+      end)
 
-    Task.await(task)
+    :ok = Task.await(task)
     :timer.sleep(@remove_resource_after_millisecs * 2)
+
+    # assert that the resource pool has no crashed:
+    true = Process.alive?(pid)
   end
 end
