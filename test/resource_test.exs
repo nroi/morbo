@@ -66,7 +66,7 @@ defmodule ResourceTest do
       Task.async(fn ->
         {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
         {:new_spawn, {:spawned, :seed2}} = Morbo.ResourcePool.resource_request(:seed2)
-        :ok = Morbo.ResourcePool.release_resource(:seed2)
+        :ok
       end)
 
     :ok = Task.await(task)
