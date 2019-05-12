@@ -60,7 +60,7 @@ defmodule ResourceTest do
   end
 
   @tag :wip
-  test "No errors occur when the same process has resources both in :released and in :locked state",
+  test "No errors occur when the same process acquires two different resources",
        %{resource_pool: pid} do
     task =
       Task.async(fn ->
@@ -72,7 +72,24 @@ defmodule ResourceTest do
     :ok = Task.await(task)
     :timer.sleep(@remove_resource_after_millisecs * 2)
 
-    # assert that the resource pool has no crashed:
+    # assert that the resource pool has not crashed:
+    true = Process.alive?(pid)
+  end
+
+  @tag :wip
+  test "No errors occur when the same process acquires the same resource twice",
+       %{resource_pool: pid} do
+    task =
+      Task.async(fn ->
+        {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+        {:new_spawn, {:spawned, :seed1}} = Morbo.ResourcePool.resource_request(:seed1)
+        :ok
+      end)
+
+    :ok = Task.await(task)
+    :timer.sleep(@remove_resource_after_millisecs * 2)
+
+    # assert that the resource pool has not crashed:
     true = Process.alive?(pid)
   end
 end
