@@ -26,7 +26,7 @@ defmodule Morbo.MixProject do
 
   defp deps do
     [
-      {:excoveralls, "~> 0.11.0", only: :test},
+      {:excoveralls, "~> 0.11.1", only: :test},
       {:hackney, "~> 1.15", only: :test},
       {:eyepatch, git: "https://github.com/nroi/eyepatch.git", tag: "v0.1.11", only: :test}
     ]
